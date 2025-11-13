@@ -96,7 +96,7 @@ t_chunk	*read_chunks(int fd, char *stash, size_t *start)
 	t_chunk	*chunks;
 	char	*newline;
 	ssize_t	n_bytes;
-	size_t	last_start;
+	size_t	chunk_start;
 	size_t	len;
 	t_chunk	*chunk;
 
@@ -110,17 +110,17 @@ t_chunk	*read_chunks(int fd, char *stash, size_t *start)
 			n_bytes = BUFFER_SIZE;
 		if (n_bytes == 0)
 			break ;
-		last_start = *start;
+		chunk_start = *start;
 		newline = ft_memchr(&(*stash)[start], '\n', n_bytes);
 		if (newline)
 			len = newline - stash + 1;
 		else
-			len = n_bytes - last_start;
+			len = n_bytes - chunk_start;
 		if (newline && n_bytes == BUFFER_SIZE)
 			*start = len;
 		else
 			*start = 0;
-		chunk = create_chunk(stash, last_start, len);
+		chunk = create_chunk(stash, chunk_start, len);
 		append_chunk(&chunks, chunk);
 	}
 	return (chunks);
