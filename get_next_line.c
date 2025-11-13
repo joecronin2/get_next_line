@@ -1,16 +1,14 @@
-/* **************************************************************************
- */
+/* ************************************************************************** */
 /*                                                                            */
-/*                                                        :::      :::::::: */
-/*   get_next_line.c                                    :+:      :+:    :+: */
-/*                                                    +:+ +:+         +:+ */
-/*   By: jcronin <jcronin@student.codam.nl>         +#+  +:+       +#+ */
-/*                                                +#+#+#+#+#+   +#+ */
-/*   Created: 2025/11/13 03:09:25 by jcronin           #+#    #+# */
-/*   Updated: 2025/11/13 03:17:54 by jcronin          ###   ########.fr */
+/*                                                        :::      ::::::::   */
+/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: jcronin <jcronin@student.codam.nl>         +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/11/13 05:13:01 by jcronin           #+#    #+#             */
+/*   Updated: 2025/11/13 05:13:02 by jcronin          ###   ########.fr       */
 /*                                                                            */
-/* **************************************************************************
- */
+/* ************************************************************************** */
 
 #include "get_next_line.h"
 #include <stdio.h>
@@ -96,7 +94,6 @@ t_chunk	*read_chunks(int fd, char *stash, size_t *start)
 	t_chunk	*chunks;
 	char	*newline;
 	ssize_t	n_bytes;
-	size_t	chunk_start;
 	size_t	len;
 	t_chunk	*chunk;
 
@@ -104,24 +101,19 @@ t_chunk	*read_chunks(int fd, char *stash, size_t *start)
 	newline = NULL;
 	while (!newline)
 	{
-		if (*start == 0)
+		if (*start == 0) // start at 0 means previous stash has been used
 			n_bytes = read(fd, stash, BUFFER_SIZE);
-		else
+		else // ehhhh static?
 			n_bytes = BUFFER_SIZE;
 		if (n_bytes == 0)
 			break ;
-		chunk_start = *start;
 		newline = ft_memchr(&(*stash)[start], '\n', n_bytes);
+		len = n_bytes - *start; // ew but works?
 		if (newline)
 			len = newline - stash + 1;
-		else
-			len = n_bytes - chunk_start;
-		if (newline && n_bytes == BUFFER_SIZE)
-			*start = len;
-		else
-			*start = 0;
-		chunk = create_chunk(stash, chunk_start, len);
+		chunk = create_chunk(stash, *start, len);
 		append_chunk(&chunks, chunk);
+		*start = (newline && n_bytes == BUFFER_SIZE) * len; // what the fuck
 	}
 	return (chunks);
 }
