@@ -1,14 +1,16 @@
-/* ************************************************************************** */
+/* **************************************************************************
+ */
 /*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: jcronin <jcronin@student.codam.nl>         +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/13 03:09:25 by jcronin           #+#    #+#             */
-/*   Updated: 2025/11/13 03:12:25 by jcronin          ###   ########.fr       */
+/*                                                        :::      :::::::: */
+/*   get_next_line.c                                    :+:      :+:    :+: */
+/*                                                    +:+ +:+         +:+ */
+/*   By: jcronin <jcronin@student.codam.nl>         +#+  +:+       +#+ */
+/*                                                +#+#+#+#+#+   +#+ */
+/*   Created: 2025/11/13 03:09:25 by jcronin           #+#    #+# */
+/*   Updated: 2025/11/13 03:17:54 by jcronin          ###   ########.fr */
 /*                                                                            */
-/* ************************************************************************** */
+/* **************************************************************************
+ */
 
 #include "get_next_line.h"
 #include <stdio.h>
@@ -123,6 +125,24 @@ t_chunk	*read_chunks(int fd, char *stash, size_t *start)
 	}
 	return (chunks);
 }
+
+// if (newline)
+// 	{
+// 		size_t len = newline - stash + 1; // include newline
+// 		// n_bytes >= len
+// 		t_chunk *chunk = create_chunk (stash, last_start, len);
+// 		start = len;
+// 		append_chunk (&chunks, chunk);
+// 		if (n_bytes < BUFFER_SIZE) start = 0;
+// 		break ;
+// 	}
+// else
+// 	{
+// 		size_t len = n_bytes - last_start;
+// 		t_chunk *chunk = create_chunk (stash, last_start, len);
+// 		append_chunk (&chunks, chunk);
+// 		start = 0;
+// 	}
 
 char	*get_next_line(int fd)
 {
