@@ -7,6 +7,7 @@
 typedef struct s_chunk
 {
   char *data;
+  size_t len;
   struct s_chunk *next;
 } t_chunk;
 
