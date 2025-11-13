@@ -6,7 +6,7 @@
 /*   By: jcronin <jcronin@student.codam.nl>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/13 03:09:25 by jcronin           #+#    #+#             */
-/*   Updated: 2025/11/13 03:09:26 by jcronin          ###   ########.fr       */
+/*   Updated: 2025/11/13 03:12:25 by jcronin          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,25 +16,6 @@
 #include <string.h>
 #include <sys/select.h>
 #include <unistd.h>
-
-// aaaaa | aa\naa
-//
-// read 1 into static buffer
-//
-// 1 st  | 2 file
-// aaaaa | aa\naa
-//
-// No \n, so copy into malloc 1
-//
-// 1 he  | 2 file
-// aaaaa | aa\naa
-//
-// read 2 into static
-// 1 he  | 2 st
-// aaaaa | aa\naa
-//
-// \n idx 2
-// join 2st to idx to he
 
 t_chunk	*create_chunk(char *stash, size_t start, size_t len)
 {
