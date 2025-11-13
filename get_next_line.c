@@ -156,42 +156,45 @@ free_chunks (t_chunk *chunks)
 // start, no newline
 //
 
-char *
-get_next_line (int fd)
+t_chunk *
+read_chunks (int fd, char *stash, size_t *start)
 {
-  static char stash[BUFFER_SIZE];
-  static size_t start = 0;
   t_chunk *chunks = NULL;
-  while (1)
+  char *newline = NULL;
+  while (!newline)
     {
       ssize_t n_bytes;
-      if (start == 0)
+      if (*start == 0)
         n_bytes = read (fd, stash, BUFFER_SIZE);
       else
         n_bytes = BUFFER_SIZE;
 
       if (n_bytes == 0) break;
 
-      size_t last_start = start;
-      char *newline = ft_memchr (&stash[start], '\n', n_bytes);
+      size_t last_start = *start;
+      newline = ft_memchr (&(*stash)[start], '\n', n_bytes);
+      size_t len;
       if (newline)
-        {
-          size_t len = newline - stash + 1; // include newline
-          // n_bytes >= len
-          t_chunk *chunk = create_chunk (stash, last_start, len);
-          start = len;
-          append_chunk (&chunks, chunk);
-          if (n_bytes < BUFFER_SIZE) start = 0;
-          break;
-        }
+        len = newline - stash + 1; // include newline
       else
-        {
-          size_t len = n_bytes - last_start;
-          t_chunk *chunk = create_chunk (stash, last_start, len);
-          append_chunk (&chunks, chunk);
-          start = 0;
-        }
+        len = n_bytes - last_start;
+
+      if (newline && n_bytes == BUFFER_SIZE)
+        *start = len;
+      else
+        *start = 0;
+      t_chunk *chunk = create_chunk (stash, last_start, len);
+      append_chunk (&chunks, chunk);
     }
+  return chunks;
+}
+
+char *
+get_next_line (int fd)
+{
+  static char stash[BUFFER_SIZE];
+  static size_t start = 0;
+  t_chunk *chunks = read_chunks (fd, stash, &start);
   char *line = concat_chunks (chunks);
   free_chunks (chunks);
   return line;
