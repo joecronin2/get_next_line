@@ -24,91 +24,102 @@
 // \n idx 2
 // join 2st to idx to he
 
-t_chunk *
-create_chunk (char *stash, size_t start, size_t len)
+t_chunk	*create_chunk(char *stash, size_t start, size_t len)
 {
-  t_chunk *chunk = malloc (sizeof (*chunk));
-  if (!chunk) return 0;
-  chunk->data = malloc (BUFFER_SIZE);
-  if (!chunk->data)
-    {
-      free (chunk);
-      return 0;
-    }
-  chunk->len = len;
-  ft_memcpy (chunk->data, &stash[start], len);
-  chunk->next = NULL;
-  return chunk;
+	t_chunk	*chunk;
+
+	chunk = malloc(sizeof(*chunk));
+	if (!chunk)
+		return (0);
+	chunk->data = malloc(BUFFER_SIZE);
+	if (!chunk->data)
+	{
+		free(chunk);
+		return (0);
+	}
+	chunk->len = len;
+	ft_memcpy(chunk->data, &stash[start], len);
+	chunk->next = NULL;
+	return (chunk);
 }
 
-int
-append_chunk (t_chunk **chunks, t_chunk *chunk)
+int	append_chunk(t_chunk **chunks, t_chunk *chunk)
 {
-  if (!*chunks)
-    *chunks = chunk;
-  else
-    {
-      t_chunk *tmp = *chunks;
-      while (tmp->next)
-        tmp = tmp->next;
-      tmp->next = chunk;
-    }
-  return 1;
+	t_chunk	*tmp;
+
+	if (!*chunks)
+		*chunks = chunk;
+	else
+	{
+		tmp = *chunks;
+		while (tmp->next)
+			tmp = tmp->next;
+		tmp->next = chunk;
+	}
+	return (1);
 }
 
-int
-chunks_len (t_chunk *chunks)
+int	chunks_len(t_chunk *chunks)
 {
-  int len = 0;
-  while (chunks)
-    {
-      chunks = chunks->next;
-      len++;
-    }
-  return len;
+	int	len;
+
+	len = 0;
+	while (chunks)
+	{
+		chunks = chunks->next;
+		len++;
+	}
+	return (len);
 }
 
-size_t
-calc_chunks_len (t_chunk *chunks)
+size_t	calc_chunks_len(t_chunk *chunks)
 {
-  size_t count = 0;
-  while (chunks)
-    {
-      count += chunks->len;
-      chunks = chunks->next;
-    }
-  return count;
+	size_t	count;
+
+	count = 0;
+	while (chunks)
+	{
+		count += chunks->len;
+		chunks = chunks->next;
+	}
+	return (count);
 }
 
 // index in last chunk
-char *
-concat_chunks (t_chunk *chunks)
+char	*concat_chunks(t_chunk *chunks)
 {
-  if (!chunks) return NULL;
-  size_t len = calc_chunks_len (chunks);
-  char *buf = malloc (len);
-  if (!buf) return NULL;
-  size_t i = 0;
-  while (chunks)
-    {
-      ft_memcpy (&buf[i], chunks->data, chunks->len);
-      i += chunks->len;
-      chunks = chunks->next;
-    }
-  buf[i] = '\0';
-  return buf;
+	size_t	len;
+	char	*buf;
+	size_t	i;
+
+	if (!chunks)
+		return (NULL);
+	len = calc_chunks_len(chunks);
+	buf = malloc(len);
+	if (!buf)
+		return (NULL);
+	i = 0;
+	while (chunks)
+	{
+		ft_memcpy(&buf[i], chunks->data, chunks->len);
+		i += chunks->len;
+		chunks = chunks->next;
+	}
+	buf[i] = '\0';
+	return (buf);
 }
 
-void
-free_chunks (t_chunk *chunks)
+void	free_chunks(t_chunk *chunks)
 {
-  while (chunks)
-    {
-      t_chunk *tmp = chunks->next;
-      free (chunks->data);
-      free (chunks);
-      chunks = tmp;
-    }
+	t_chunk	*tmp;
+
+	while (chunks)
+	{
+		tmp = chunks->next;
+		free(chunks->data);
+		free(chunks);
+		chunks = tmp;
+	}
 }
 
 // a$ab c$a$ abc$ abcd
@@ -156,48 +167,52 @@ free_chunks (t_chunk *chunks)
 // start, no newline
 //
 
-t_chunk *
-read_chunks (int fd, char *stash, size_t *start)
+t_chunk	*read_chunks(int fd, char *stash, size_t *start)
 {
-  t_chunk *chunks = NULL;
-  char *newline = NULL;
-  while (!newline)
-    {
-      ssize_t n_bytes;
-      if (*start == 0)
-        n_bytes = read (fd, stash, BUFFER_SIZE);
-      else
-        n_bytes = BUFFER_SIZE;
+	t_chunk	*chunks;
+	char	*newline;
+		ssize_t n_bytes;
+	size_t	last_start;
+		size_t len;
+	t_chunk	*chunk;
 
-      if (n_bytes == 0) break;
-
-      size_t last_start = *start;
-      newline = ft_memchr (&(*stash)[start], '\n', n_bytes);
-      size_t len;
-      if (newline)
-        len = newline - stash + 1; // include newline
-      else
-        len = n_bytes - last_start;
-
-      if (newline && n_bytes == BUFFER_SIZE)
-        *start = len;
-      else
-        *start = 0;
-      t_chunk *chunk = create_chunk (stash, last_start, len);
-      append_chunk (&chunks, chunk);
-    }
-  return chunks;
+	chunks = NULL;
+	newline = NULL;
+	while (!newline)
+	{
+		if (*start == 0)
+			n_bytes = read(fd, stash, BUFFER_SIZE);
+		else
+			n_bytes = BUFFER_SIZE;
+		if (n_bytes == 0)
+			break ;
+		last_start = *start;
+		newline = ft_memchr(&(*stash)[start], '\n', n_bytes);
+		if (newline)
+			len = newline - stash + 1; // include newline
+		else
+			len = n_bytes - last_start;
+		if (newline && n_bytes == BUFFER_SIZE)
+			*start = len;
+		else
+			*start = 0;
+		chunk = create_chunk(stash, last_start, len);
+		append_chunk(&chunks, chunk);
+	}
+	return (chunks);
 }
 
-char *
-get_next_line (int fd)
+char	*get_next_line(int fd)
 {
-  static char stash[BUFFER_SIZE];
-  static size_t start = 0;
-  t_chunk *chunks = read_chunks (fd, stash, &start);
-  char *line = concat_chunks (chunks);
-  free_chunks (chunks);
-  return line;
+	static char		stash[BUFFER_SIZE];
+	static size_t	start = 0;
+	t_chunk			*chunks;
+	char			*line;
+
+	chunks = read_chunks(fd, stash, &start);
+	line = concat_chunks(chunks);
+	free_chunks(chunks);
+	return (line);
 }
 
 // char *
@@ -217,14 +232,14 @@ get_next_line (int fd)
 //       if (newline)
 //         {
 //           start = (newline - stash) + 1;
-//           break;
+//           break ;
 //         }
 //       ssize_t n_read = read (fd, stash, BUFFER_SIZE);
 //       if (n_read <= 0)
 //         {
 //           start = 0;
 //           end = 0;
-//           break;
+//           break ;
 //         }
 //       start = 0;
 //       end = n_read;
@@ -234,7 +249,7 @@ get_next_line (int fd)
 //   size_t line_len = start;
 //   char *line = concat_chunks (chunks, 0, line_len);
 //   free_chunks (chunks);
-//   return line;
+//   return (line);
 // }
 
 #include <fcntl.h>
@@ -250,17 +265,18 @@ get_next_line (int fd)
 //   int *a = malloc (4);
 // }
 
-int
-main ()
+int	main(void)
 {
-  // test_concat ();
-  int fd = open ("./testfile", O_RDONLY);
-  char *l;
-  while ((l = get_next_line (fd)))
-    {
-      printf ("%s", l);
-      free (l);
-    }
-  close (fd);
-  return 0;
+	int		fd;
+	char	*l;
+
+	// test_concat ();
+	fd = open("./testfile", O_RDONLY);
+	while ((l = get_next_line(fd)))
+	{
+		printf("%s", l);
+		free(l);
+	}
+	close(fd);
+	return (0);
 }
