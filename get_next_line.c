@@ -60,20 +60,6 @@ append_chunk (t_chunk **chunks, t_chunk *chunk)
   return (1);
 }
 
-int
-chunks_len (t_chunk *chunks)
-{
-  int len;
-
-  len = 0;
-  while (chunks)
-    {
-      chunks = chunks->next;
-      len++;
-    }
-  return (len);
-}
-
 size_t
 calc_chunks_len (t_chunk *chunks)
 {
@@ -109,20 +95,6 @@ concat_chunks (t_chunk *chunks)
     }
   buf[i] = '\0';
   return (buf);
-}
-
-void
-free_chunks (t_chunk *chunks)
-{
-  t_chunk *tmp;
-
-  while (chunks)
-    {
-      tmp = chunks->next;
-      free (chunks->data);
-      free (chunks);
-      chunks = tmp;
-    }
 }
 
 t_chunk *
@@ -170,7 +142,16 @@ get_next_line (int fd)
 
   chunks = read_chunks (fd, stash, &start);
   line = concat_chunks (chunks);
-  free_chunks (chunks);
+  t_chunk *tmp;
+
+  while (chunks)
+    {
+      tmp = chunks->next;
+      free (chunks->data);
+      free (chunks);
+      chunks = tmp;
+    }
+
   return (line);
 }
 
