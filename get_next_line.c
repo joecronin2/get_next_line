@@ -24,259 +24,170 @@
 // \n idx 2
 // join 2st to idx to he
 
-t_chunk	*create_chunk(char *stash, size_t start, size_t len)
+t_chunk *
+create_chunk (char *stash, size_t start, size_t len)
 {
-	t_chunk	*chunk;
+  t_chunk *chunk;
 
-	chunk = malloc(sizeof(*chunk));
-	if (!chunk)
-		return (0);
-	chunk->data = malloc(BUFFER_SIZE);
-	if (!chunk->data)
-	{
-		free(chunk);
-		return (0);
-	}
-	chunk->len = len;
-	ft_memcpy(chunk->data, &stash[start], len);
-	chunk->next = NULL;
-	return (chunk);
+  chunk = malloc (sizeof (*chunk));
+  if (!chunk) return (0);
+  chunk->data = malloc (BUFFER_SIZE);
+  if (!chunk->data)
+    {
+      free (chunk);
+      return (0);
+    }
+  chunk->len = len;
+  ft_memcpy (chunk->data, &stash[start], len);
+  chunk->next = NULL;
+  return (chunk);
 }
 
-int	append_chunk(t_chunk **chunks, t_chunk *chunk)
+int
+append_chunk (t_chunk **chunks, t_chunk *chunk)
 {
-	t_chunk	*tmp;
+  t_chunk *tmp;
 
-	if (!*chunks)
-		*chunks = chunk;
-	else
-	{
-		tmp = *chunks;
-		while (tmp->next)
-			tmp = tmp->next;
-		tmp->next = chunk;
-	}
-	return (1);
+  if (!*chunks)
+    *chunks = chunk;
+  else
+    {
+      tmp = *chunks;
+      while (tmp->next)
+        tmp = tmp->next;
+      tmp->next = chunk;
+    }
+  return (1);
 }
 
-int	chunks_len(t_chunk *chunks)
+int
+chunks_len (t_chunk *chunks)
 {
-	int	len;
+  int len;
 
-	len = 0;
-	while (chunks)
-	{
-		chunks = chunks->next;
-		len++;
-	}
-	return (len);
+  len = 0;
+  while (chunks)
+    {
+      chunks = chunks->next;
+      len++;
+    }
+  return (len);
 }
 
-size_t	calc_chunks_len(t_chunk *chunks)
+size_t
+calc_chunks_len (t_chunk *chunks)
 {
-	size_t	count;
+  size_t count;
 
-	count = 0;
-	while (chunks)
-	{
-		count += chunks->len;
-		chunks = chunks->next;
-	}
-	return (count);
+  count = 0;
+  while (chunks)
+    {
+      count += chunks->len;
+      chunks = chunks->next;
+    }
+  return (count);
 }
 
 // index in last chunk
-char	*concat_chunks(t_chunk *chunks)
+char *
+concat_chunks (t_chunk *chunks)
 {
-	size_t	len;
-	char	*buf;
-	size_t	i;
+  size_t len;
+  char *buf;
+  size_t i;
 
-	if (!chunks)
-		return (NULL);
-	len = calc_chunks_len(chunks);
-	buf = malloc(len);
-	if (!buf)
-		return (NULL);
-	i = 0;
-	while (chunks)
-	{
-		ft_memcpy(&buf[i], chunks->data, chunks->len);
-		i += chunks->len;
-		chunks = chunks->next;
-	}
-	buf[i] = '\0';
-	return (buf);
+  if (!chunks) return (NULL);
+  len = calc_chunks_len (chunks);
+  buf = malloc (len);
+  if (!buf) return (NULL);
+  i = 0;
+  while (chunks)
+    {
+      ft_memcpy (&buf[i], chunks->data, chunks->len);
+      i += chunks->len;
+      chunks = chunks->next;
+    }
+  buf[i] = '\0';
+  return (buf);
 }
 
-void	free_chunks(t_chunk *chunks)
+void
+free_chunks (t_chunk *chunks)
 {
-	t_chunk	*tmp;
+  t_chunk *tmp;
 
-	while (chunks)
-	{
-		tmp = chunks->next;
-		free(chunks->data);
-		free(chunks);
-		chunks = tmp;
-	}
+  while (chunks)
+    {
+      tmp = chunks->next;
+      free (chunks->data);
+      free (chunks);
+      chunks = tmp;
+    }
 }
 
-// a$ab c$a$ abc$ abcd
-// a, abc, a, abc, abcd
-// start: 0 -> read stash
-// memchr 1:
-//  start = 2
-// 	append chunk, return
-// start: 2 -> use previous stash
-// memchr NULL:
-// 	start = 0
-// 	append chunk, loop
-// start: 0 -> read stash
-// memchr 1:
-//  start = 2
-// 	append chunk, return
-//
-// abcd efgh ij$0
-// abcdefghij
-// start: 0 -> read stash
-// memchr NULL:
-// 	start = 0
-// 	append chunk (memchr NULL so (0,BUFFER_SIZE), loop
-// current chunks: abcd
-// start: 0 -> read stash
-// memchr NULL:
-// 	start = 0
-// 	append chunk (memchr NULL so (0,BUFFER_SIZE), loop
-// current chunks: abcd, efgh
-// start: 0 -> read stash
-// memchr 2:
-// 	start = 3
-// 	append chunk (memchr 2 so (0,2), loop
-// 	current chunks: abcd, efgh, ij
-// 	memchr not null -> return chunks
-
-// always add at most (BUFFER_SIZE - start) bytes to chunk
-//
-// cases:
-// start, newline
-//
-//
-// no start, newline
-// no start, no newline
-// start, no newline
-//
-
-t_chunk	*read_chunks(int fd, char *stash, size_t *start)
+t_chunk *
+read_chunks (int fd, char *stash, size_t *start)
 {
-	t_chunk	*chunks;
-	char	*newline;
-		ssize_t n_bytes;
-	size_t	last_start;
-		size_t len;
-	t_chunk	*chunk;
+  t_chunk *chunks;
+  char *newline;
+  ssize_t n_bytes;
+  size_t last_start;
+  size_t len;
+  t_chunk *chunk;
 
-	chunks = NULL;
-	newline = NULL;
-	while (!newline)
-	{
-		if (*start == 0)
-			n_bytes = read(fd, stash, BUFFER_SIZE);
-		else
-			n_bytes = BUFFER_SIZE;
-		if (n_bytes == 0)
-			break ;
-		last_start = *start;
-		newline = ft_memchr(&(*stash)[start], '\n', n_bytes);
-		if (newline)
-			len = newline - stash + 1; // include newline
-		else
-			len = n_bytes - last_start;
-		if (newline && n_bytes == BUFFER_SIZE)
-			*start = len;
-		else
-			*start = 0;
-		chunk = create_chunk(stash, last_start, len);
-		append_chunk(&chunks, chunk);
-	}
-	return (chunks);
+  chunks = NULL;
+  newline = NULL;
+  while (!newline)
+    {
+      if (*start == 0)
+        n_bytes = read (fd, stash, BUFFER_SIZE);
+      else
+        n_bytes = BUFFER_SIZE;
+      if (n_bytes == 0) break;
+      last_start = *start;
+      newline = ft_memchr (&(*stash)[start], '\n', n_bytes);
+      if (newline)
+        len = newline - stash + 1;
+      else
+        len = n_bytes - last_start;
+      if (newline && n_bytes == BUFFER_SIZE)
+        *start = len;
+      else
+        *start = 0;
+      chunk = create_chunk (stash, last_start, len);
+      append_chunk (&chunks, chunk);
+    }
+  return (chunks);
 }
 
-char	*get_next_line(int fd)
+char *
+get_next_line (int fd)
 {
-	static char		stash[BUFFER_SIZE];
-	static size_t	start = 0;
-	t_chunk			*chunks;
-	char			*line;
+  static char stash[BUFFER_SIZE];
+  static size_t start = 0;
+  t_chunk *chunks;
+  char *line;
 
-	chunks = read_chunks(fd, stash, &start);
-	line = concat_chunks(chunks);
-	free_chunks(chunks);
-	return (line);
+  chunks = read_chunks (fd, stash, &start);
+  line = concat_chunks (chunks);
+  free_chunks (chunks);
+  return (line);
 }
-
-// char *
-// get_next_line (int fd)
-// {
-//   static char stash[BUFFER_SIZE];
-//   static size_t start = 0;
-//   static size_t end = 0;
-//   t_chunk *chunks = NULL;
-//   char *newline = NULL;
-//   size_t chunk_start = start;
-//   if (start < end)
-//     append_chunk (&chunks, &stash[start], end - start);
-//   while (1)
-//     {
-//       newline = memchr (&stash[start], '\n', end - start);
-//       if (newline)
-//         {
-//           start = (newline - stash) + 1;
-//           break ;
-//         }
-//       ssize_t n_read = read (fd, stash, BUFFER_SIZE);
-//       if (n_read <= 0)
-//         {
-//           start = 0;
-//           end = 0;
-//           break ;
-//         }
-//       start = 0;
-//       end = n_read;
-//       chunk_start = 0;
-//       append_chunk (&chunks, stash, end - start);
-//     }
-//   size_t line_len = start;
-//   char *line = concat_chunks (chunks, 0, line_len);
-//   free_chunks (chunks);
-//   return (line);
-// }
 
 #include <fcntl.h>
 
-// void
-// test_concat ()
-// {
-//   t_chunk *c = NULL;
-//   append_chunk (&c, "a123456789ABCDE ");
-//   append_chunk (&c, "b123456789ABCDE ");
-//   append_chunk (&c, "c123\n0000000000e");
-//   char *s = concat_chunks (c, 0, 3);
-//   int *a = malloc (4);
-// }
-
-int	main(void)
+int
+main (void)
 {
-	int		fd;
-	char	*l;
+  int fd;
+  char *l;
 
-	// test_concat ();
-	fd = open("./testfile", O_RDONLY);
-	while ((l = get_next_line(fd)))
-	{
-		printf("%s", l);
-		free(l);
-	}
-	close(fd);
-	return (0);
+  fd = open ("./testfile", O_RDONLY);
+  while ((l = get_next_line (fd)))
+    {
+      printf ("%s", l);
+      free (l);
+    }
+  close (fd);
+  return (0);
 }
