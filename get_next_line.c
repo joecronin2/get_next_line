@@ -1,14 +1,16 @@
-/* ************************************************************************** */
+/* **************************************************************************
+ */
 /*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: jcronin <jcronin@student.codam.nl>         +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/13 05:13:01 by jcronin           #+#    #+#             */
-/*   Updated: 2025/11/13 05:13:02 by jcronin          ###   ########.fr       */
+/*                                                        :::      :::::::: */
+/*   get_next_line.c                                    :+:      :+:    :+: */
+/*                                                    +:+ +:+         +:+ */
+/*   By: jcronin <jcronin@student.codam.nl>         +#+  +:+       +#+ */
+/*                                                +#+#+#+#+#+   +#+ */
+/*   Created: 2025/11/13 05:13:01 by jcronin           #+#    #+# */
+/*   Updated: 2025/11/13 05:13:02 by jcronin          ###   ########.fr */
 /*                                                                            */
-/* ************************************************************************** */
+/* **************************************************************************
+ */
 
 #include "get_next_line.h"
 #include <stdio.h>
@@ -17,7 +19,7 @@
 #include <sys/select.h>
 #include <unistd.h>
 
-t_chunk	*create_chunk(char *stash, size_t start, size_t len)
+t_chunk	*create_chunk(unsigned char *stash, size_t start, size_t len)
 {
 	t_chunk	*chunk;
 
@@ -89,31 +91,66 @@ char	*concat_chunks(t_chunk *chunks)
 	return (buf);
 }
 
-t_chunk	*read_chunks(int fd, char *stash, size_t *start)
+// mul$ti$ple$lines
+// start = 0 read
+// newline = 4 (newline - stash)
+// len = newline - start (newline - stash) - start
+// start = 4 no read
+// newline =
+
+// abcd
+// newline = 4
+// abc\n
+// newline = 3
+
+size_t	chunk_len(const unsigned char *s, size_t n)
 {
-	t_chunk	*chunks;
-	char	*newline;
-	ssize_t	n_bytes;
+	size_t	i;
+
+	i = 0;
+	while (i < n)
+	{
+		if (s[i] == '\n')
+			return (i + 1);
+		i++;
+	}
+	return (i);
+}
+
+t_chunk	*get_chunk(t_stash *stash)
+{
+	size_t	max;
 	size_t	len;
 	t_chunk	*chunk;
 
+	max = stash->len - stash->start;
+	if (max == 0)
+		return (NULL);
+	len = chunk_len(&stash->stash[stash->start], max);
+	// reset chunk if end
+	chunk = create_chunk(stash->stash, stash->start, len);
+	if (stash->start + len + 1 > BUFFER_SIZE)
+		stash->start = 0;
+	else
+		stash->start = stash->start + len;
+	return (chunk);
+}
+
+t_chunk	*read_chunks(int fd, t_stash *stash)
+{
+	t_chunk	*chunks;
+	t_chunk	*chunk;
+
+	chunk = (t_chunk *)1;
 	chunks = NULL;
-	newline = NULL;
-	while (!newline)
+	while (chunk)
 	{
-		if (*start == 0) // start at 0 means previous stash has been used
-			n_bytes = read(fd, stash, BUFFER_SIZE);
-		else // ehhhh static?
-			n_bytes = BUFFER_SIZE;
-		if (n_bytes == 0)
-			break ;
-		newline = ft_memchr(&(*stash)[start], '\n', n_bytes);
-		len = n_bytes - *start; // ew but works?
-		if (newline)
-			len = newline - stash + 1;
-		chunk = create_chunk(stash, *start, len);
+		if (stash->start == 0) // start at 0 means previous stash has been used
+			stash->len = read(fd, stash, BUFFER_SIZE);
+		if (stash->len == 0)
+			return (NULL);
+		chunk = get_chunk(stash);
 		append_chunk(&chunks, chunk);
-		*start = (newline && n_bytes == BUFFER_SIZE) * len; // what the fuck
 	}
 	return (chunks);
 }
@@ -138,13 +175,12 @@ t_chunk	*read_chunks(int fd, char *stash, size_t *start)
 
 char	*get_next_line(int fd)
 {
-	static char		stash[BUFFER_SIZE];
-	static size_t	start = 0;
+	static t_stash	stash;
 	t_chunk			*chunks;
 	char			*line;
 	t_chunk			*tmp;
 
-	chunks = read_chunks(fd, stash, &start);
+	chunks = read_chunks(fd, &stash);
 	line = concat_chunks(chunks);
 	while (chunks)
 	{
@@ -162,11 +198,13 @@ int	main(void)
 {
 	int		fd;
 	char	*l;
+	int		i;
 
 	fd = open("./testfile", O_RDONLY);
+	i = 0;
 	while ((l = get_next_line(fd)))
 	{
-		printf("%s", l);
+		printf("%d: %s", i++, l);
 		free(l);
 	}
 	close(fd);
