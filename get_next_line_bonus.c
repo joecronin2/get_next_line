@@ -13,6 +13,7 @@
  */
 
 #include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 t_chunk *
 create_chunk (unsigned char *str, size_t len)
@@ -33,7 +34,7 @@ create_chunk (unsigned char *str, size_t len)
   return (chunk);
 }
 
-int
+void
 append_chunk (t_chunk **chunks, t_chunk *chunk)
 {
   t_chunk *tmp;
@@ -47,7 +48,6 @@ append_chunk (t_chunk **chunks, t_chunk *chunk)
         tmp = tmp->next;
       tmp->next = chunk;
     }
-  return (1);
 }
 
 size_t

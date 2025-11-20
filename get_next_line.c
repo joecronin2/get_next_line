@@ -65,10 +65,7 @@ get_chunk (t_stash *stash)
   if (max == 0) return (NULL);
   len = chunk_len (&stash->stash[stash->start], max);
   chunk = create_chunk (&stash->stash[stash->start], len);
-  // if (len < stash->len)
   stash->start = stash->start + len;
-  // else
-  //   stash->start = 0;
   return (chunk);
 }
 
@@ -102,6 +99,19 @@ get_next_line (int fd)
   t_chunk *chunks;
   char *line;
 
+// DEBUG
+#include <stdio.h>
+#include <string.h>
+  printf ("stash: ");
+  char *cpy = strdup ((char *)stash.stash);
+  while (*cpy)
+    {
+      if (*cpy == '\n') *cpy = '$';
+      cpy++;
+    }
+  for (int i = 0; i < BUFFER_SIZE; i++)
+    putchar (cpy[i]);
+  putchar ('\n');
   chunks = read_chunks (fd, &stash);
   line = concat_chunks (chunks);
   free_chunks (chunks);
